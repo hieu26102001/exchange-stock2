@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 // Created By: ADARSH SHRIVASTAVA
 
 pragma solidity >=0.7.0 <0.9.0;
@@ -10,8 +10,8 @@ contract Company{
     string companyName; // it's a general name
     uint totalStocks; // total stocks a company released in IPO
     uint currentRate; // rate at which last transaction took place
-    uint minimumBuyRate; // minimum rate of this company's stock in history
-    uint maximumSellRate; // max rate of this company's stock in history
+    uint minimumRate; // minimum rate of this company's stock in history
+    uint maximumRate; // max rate of this company's stock in history
     string description; // company description for users to know it
     mapping(address => uint) holdingsMap; // mapping of user's address to their holdings
     StockListing[] listingsArray; // mapping of user's address to stocks they have listed
@@ -29,17 +29,17 @@ contract Company{
         uint rate
     );
     
-    constructor(address _ExchangeAddress, string memory _conpanyId, string memory _companyName, uint _totalStocks, uint _stocksToList) {
-        ExchangeAddress = _ExchangeAddress; // address of exchange contract
+    constructor() {
+        ExchangeAddress = 0x0fC5025C764cE34df352757e82f7B5c4Df39A836; // address of exchange contract
         owner = msg.sender;
-        companyId = _conpanyId; // set your company id here, make sure it is different from other companies
-        companyName = _companyName;
-        totalStocks = _totalStocks; // change this with number of stocks a company wants to create
-        holdingsMap[owner] = totalStocks; // giving all the stocks to owner at first
-        description = "Here goes my company description!"; // add description here, thought it could also be editied later through updateDescription()
-        uint stocksToList = _stocksToList; // number of stocks you want to list, remaining are held by company itself
-        currentRate = 1; // in ether, rate at which these stocks should be listed
-        listStocksForSale(msg.sender, stocksToList, currentRate); // here in place of 600, add the
+        companyId = "ACB"; 
+        companyName = "ACB ngan hang";
+        totalStocks = 1000;
+        holdingsMap[owner] = totalStocks;
+        description = "Description!";
+        uint stocksToList = 600;
+        currentRate = 1;
+        listStocksForSale(msg.sender, stocksToList, currentRate);
     }
     
     // lists stocks for sale and removes them from holdings
@@ -57,7 +57,7 @@ contract Company{
         return true;
     }
 
-    // unlists all stocks which were listed for sale and returns them to holdings
+    //remove from sale
     function unlistStocksFromSale(address _address) public {
         if(msg.sender != ExchangeAddress && msg.sender != owner)
             revert('Not Allowed');
@@ -72,13 +72,8 @@ contract Company{
         }
     }
 
-    // returns number of stocks bought
-    // it is a recursive function and the reason for this is 
-    // because there might be chances that a person needs 100 stocks
-    // and inside listingArray there are two listings of 40Stocks and 80Stocks
-    // so It will have to take 40 From first and remaining 60 from other.
     function buyStocks(address _address, uint stockCount, uint maxRate) public payable{
-        if(msg.sender != ExchangeAddress && msg.sender != owner)
+        if(msg.sender != ExchangeAddress)
             revert('Not Allowed');
         
         uint matchIndex;
@@ -102,7 +97,7 @@ contract Company{
 
         if(listingsArray[matchIndex].stocksCount <= stockCount){
             // emiting event and state update
-            TransactionHappened(msg.sender, listingsArray[matchIndex].stockOwner, listingsArray[matchIndex].stocksCount, listingsArray[matchIndex].rate);
+            TransactionHappened(_address, listingsArray[matchIndex].stockOwner, listingsArray[matchIndex].stocksCount, listingsArray[matchIndex].rate);
 
             // ether transfer
             payable(listingsArray[matchIndex].stockOwner).transfer(etherToWie(listingsArray[matchIndex].stocksCount * listingsArray[matchIndex].rate));
@@ -129,41 +124,24 @@ contract Company{
         }
     }
 
-    // this function is called everytime there is a transaction
-    // it emits events and also updates few variables
+    // this function is called when a transaction
     function TransactionHappened(address _to, address _from, uint stocksCount, uint rate) private{
-        if(minimumBuyRate > rate)
-            minimumBuyRate = rate;
+        if(minimumRate > rate)
+            minimumRate = rate;
         
-        if(maximumSellRate < rate)
-            maximumSellRate = rate;
+        if(maximumRate < rate)
+            maximumRate = rate;
 
         currentRate = rate;
         
         emit Transaction(_to, _from, stocksCount, rate);
     }
 
-    // as there is no removeAtIndex function in array here
-    // so I am simply swapping the last element of array with
-    // the one which is to be deleted and just using pop to 
-    // delete the last index
-    // Tough this will shuffle the array but for this program
-    // order of array isn't important
+    // swap with lastIndex delete last
     function deleteListingEntry(uint indexToDelete) private{
         listingsArray[indexToDelete] = listingsArray[listingsArray.length - 1];
         listingsArray.pop();
     }
-
-    // Only the owner of this contract could change the description
-    function updateDescription(string memory newDescription) public {
-        if(msg.sender == owner){
-            description = newDescription;
-        }else{
-            revert('You do not have permission to change description');
-        }
-    }
-
-    // FROM HERE ON WE WILL ADD NORMAL GETTERS AND SETTERS
 
     function getOwner() public view returns(address){
         return owner;
@@ -182,11 +160,11 @@ contract Company{
     }
 
     function getMaxRate() public view returns(uint){
-        return maximumSellRate;
+        return maximumRate;
     }
 
     function getMinRate() public view returns(uint){
-        return minimumBuyRate;
+        return minimumRate;
     }
 
     function getCurrentRate() public view returns(uint){
