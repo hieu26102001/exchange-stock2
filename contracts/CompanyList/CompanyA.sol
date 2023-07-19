@@ -32,8 +32,8 @@ contract Company{
     constructor() {
         ExchangeAddress = 0xC11E59baF8d97F22C02a2f3A7F2271a310B16a77; // address of exchange contract
         owner = msg.sender;
-        companyId = "CTC"; 
-        companyName = "Cong ty C";
+        companyId = "ACB"; 
+        companyName = "Cong ty A";
         totalStocks = 1000;
         holdingsMap[owner] = totalStocks;
         description = "Description!";
